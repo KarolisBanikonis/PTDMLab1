@@ -9,24 +9,49 @@ from statsmodels.tsa.arima.model import ARIMA
 class Ts():
     
     def __init__(self, threshold=0.05):
+        """
+        Klasės konstruktorius, kai nepaduodami parametrai duomenų siuntimui.
+        
+            Parametrai:
+                threshold (float): naudojama p-reikšmė įvairiems testams, prielaidoms patikrinti
+        """
         self.data = None
         self.threshold = threshold
 
     def __init__(self, ticker, s_date, e_date, threshold=0.05):
+        """
+        Klasės konstruktorius, kai paduodami parametrai duomenų siuntimui.
+
+            Parametrai:
+                ticker (str): įmonės akcijų kainos pavadinimas
+                s_date (str): pradžios data
+                e_date (str): pabaigos data
+                threshold (float): p-reikšmė įvairiems testams, prielaidoms patikrinti
+        """
         self.set_time_series(ticker, s_date, e_date)
         self.threshold = threshold
 
     def set_time_series(self, ticker, s_date, e_date):
+        """
+        Atsiunčia duomenis iš Yahoo Finance ir priskiria juos kintamajam 'data'.
+
+            Parametrai:
+                ticker (str): įmonės akcijų kainos pavadinimas
+                s_date (str): pradžios data
+                e_date (str): pabaigos data
+        """
         data = yfinance.Ticker(ticker).history(start=s_date, end=e_date)
         data.rename(columns = {"Close": ticker}, inplace = True)
         self.data = data[ticker]
 
     def describe(self):
+        """Spausdina aprašomąją statistiką apie laiko eilutę."""
         if self.data is not None:
             print("Trukstamų reikšmių kiekis:", self.data.isna().sum())
             print(self.data.describe())
 
     def plot_ts(self):
+        """Braižo laiko eilutės grafiką."""
         plt.figure(figsize=(10, 6))
         plt.plot(self.data.index, self.data)
         plt.xlabel('Laikotarpis')
@@ -34,11 +59,13 @@ class Ts():
         plt.show()
 
     def plot_corr_funcs(self):
+        """Braižo koreliacinių funkcijų ACF ir PACF grafikus laiko eilutei."""
         fig, ax = plt.subplots(2, figsize=(12,6))
         ax[0] = plot_acf(self.data, ax=ax[0], lags=20, alpha=self.threshold)
         ax[1] = plot_pacf(self.data.dropna(), ax=ax[1], lags=20, alpha=self.threshold)
         
     def differentiate(self):
+        """Diferencijuoja laiko eilutę iki dviejų kartų, jeigu ji nėra stacionari pagal Augmented Dickey-Fuller (ADF) testą."""
         i = 0
         while i < 2:
             i += 1
@@ -52,6 +79,14 @@ class Ts():
                 break
 
     def grid_select_arima(self, p, d, q):
+        """
+        Sukuria skirtingus ARIMA modelius ir išrenka tą, kurio Akaikės informacinis kriterijus AIC yra mažiausias.
+        
+            Parametrai:
+                p (int): vėlavimų (ang. lags) kiekis
+                d (int): diferencijavimų kiekis
+                q (int): užvėlintų prognozuotų paklaidų kiekis
+        """
         best_aic = float("inf")
         best_order = None
 
@@ -72,6 +107,12 @@ class Ts():
         print(self.arima_fit.summary())
 
     def arima_plot_forecast(self, horizon):
+        """
+        Nubraižo laiko eilutės prognozę, pasinaudojant geriausiu ARIMA modeliu, pasirinktam laiko tarpui.
+
+            Parametrai:
+                horizon (int): laiko intervalas, kuriam atliekama prognozė
+        """
         if horizon >= len(self.data):
             print("Prognozuojamas dienų kiekis privalo būti mažesnis, nei duomenų kiekis!")
             sys.exit(2)
@@ -84,6 +125,17 @@ class Ts():
         plt.show()
 
 def granger_Ts(Ts1, Ts2, test = 'ssr_ftest', lags = 10):
+    """
+    Patikrina ar viena laiko eilutė turi priežastinį ryšį kitai ir atvirkščiai.
+    
+        Parametrai:
+            Ts1 (Ts): pirma lyginama laiko eilutė
+            Ts2 (Ts): antra lyginama laiko eilutė
+            test ('ssr_ftest'|'ssr_chi2test'|'lrtest'|'params_ftest'): pasirenkama statistika, pagal kurią apskaičiuojama p-reikšmė
+            lags (int): maksimalus vėlavimų kiekis naudojamas Grangerio teste
+
+    Galimos kintamojo 'test' reikšmės yra 'ssr_ftest', 'ssr_chi2test', 'lrtest' ir 'params_ftest'.
+    """
     if Ts1.threshold != Ts2.threshold:
         print("Lyginamų laiko eilučių objektų threshold reikšmės privalo sutapti!")
         sys.exit(1)
