@@ -2,9 +2,11 @@ import yfinance
 import matplotlib.pyplot as plt
 import pandas as pd
 import sys
+import warnings
 from statsmodels.tsa.stattools import adfuller, grangercausalitytests
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf, plot_predict
 from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tools.sm_exceptions import ValueWarning
 
 class Ts():
     
@@ -87,6 +89,7 @@ class Ts():
                 d (int): diferencijavimų kiekis
                 q (int): užvėlintų prognozuotų paklaidų kiekis
         """
+        warnings.simplefilter('ignore', ValueWarning) #Ignoruoti įspėjimą, kuris pateikiamas kuriant ARIMA modelius
         best_aic = float("inf")
         best_order = None
 
@@ -94,6 +97,8 @@ class Ts():
             for d in range(0, d):
                 for q in range(0, q):
                     try:
+                        # with warnings.catch_warnings():
+                        #     warnings.
                         model = ARIMA(self.data, order = (p, d, q))
                         model_fit = model.fit()
                         if model_fit.aic < best_aic:
