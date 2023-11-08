@@ -64,7 +64,7 @@ class Ts():
         """Braižo koreliacinių funkcijų ACF ir PACF grafikus laiko eilutei."""
         fig, ax = plt.subplots(2, figsize=(12,6))
         ax[0] = plot_acf(self.data, ax=ax[0], lags=20, alpha=self.threshold)
-        ax[1] = plot_pacf(self.data.dropna(), ax=ax[1], lags=20, alpha=self.threshold)
+        ax[1] = plot_pacf(self.data, ax=ax[1], lags=20, alpha=self.threshold)
         
     def differentiate(self):
         """Diferencijuoja laiko eilutę iki dviejų kartų, jeigu ji nėra stacionari pagal Augmented Dickey-Fuller (ADF) testą."""
@@ -97,8 +97,6 @@ class Ts():
             for d in range(0, d):
                 for q in range(0, q):
                     try:
-                        # with warnings.catch_warnings():
-                        #     warnings.
                         model = ARIMA(self.data, order = (p, d, q))
                         model_fit = model.fit()
                         if model_fit.aic < best_aic:
